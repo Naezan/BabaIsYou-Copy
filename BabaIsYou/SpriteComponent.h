@@ -39,5 +39,9 @@ public:
 
 	void setTexture(std::string _textureID);
 	void play(std::string _animName);
+	void play();
+
+	void SetAnimName(std::string _animName);
+	std::string GetCurrentAnimName();
 };
 

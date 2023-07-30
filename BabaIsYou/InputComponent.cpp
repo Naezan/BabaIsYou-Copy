@@ -3,6 +3,7 @@
 #include "SpriteComponent.h"
 #include "Entity.h"
 #include "WipeTransition.h"
+#include "EntityManager.h"
 
 void InputComponent::init()
 {
@@ -99,8 +100,8 @@ void InputComponent::update(float deltaTime)
 			transform->velocity.y = 0;
 			break;
 		case SDLK_z:
-			//TO DO Undo
-			//front position queue and move to position que -> pop position que
+			componentOwner->GetEntityManager().DecreaseRecordIndex();
+			componentOwner->GetEntityManager().UpdateRecordStack();
 			break;
 		case SDLK_r:
 			if (Game::transtition->transitionOutEvent == nullptr && Game::CurStageIndex != -1)

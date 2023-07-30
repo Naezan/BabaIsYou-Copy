@@ -101,9 +101,9 @@ void TransformComponent::update(float deltaTime)
 		}
 
 		//벽찾거나 checkpos가 맵을 벗어났다면
-		if (index != 1 && objs.empty() || 
-		(checkPos.x <= WIDTH_INTERVAL - PIXEL_SIZE || checkPos.x >= WINDOW_WIDTH - WIDTH_INTERVAL ||
-		checkPos.y <= HEIGHT_INVERVAL - PIXEL_SIZE || checkPos.y >= WINDOW_HEIGHT - HEIGHT_INVERVAL))
+		if (index != 1 && objs.empty() ||
+			(checkPos.x <= WIDTH_INTERVAL - PIXEL_SIZE || checkPos.x >= WINDOW_WIDTH - WIDTH_INTERVAL ||
+				checkPos.y <= HEIGHT_INVERVAL - PIXEL_SIZE || checkPos.y >= WINDOW_HEIGHT - HEIGHT_INVERVAL))
 		{
 			return;
 		}
@@ -111,11 +111,14 @@ void TransformComponent::update(float deltaTime)
 		position += velocity * (deltaTime / 2.f);
 
 		//후처리
+		if (!componentOwner->GetEntityManager().GetIsRecording())
+		{
 		for (Entity*& obj : objs)
 		{
 			obj->getComponent<TransformComponent>()->position += velocity * (deltaTime / 2.f);
 			obj->getComponent<CollisionComponent>()->update(deltaTime);
 			obj->getComponent<SpriteComponent>()->update(deltaTime);
+		}
 		}
 
 		//충돌체는 int값이기때문에 한번 업데이트한걸로 충돌체가 움직이지 않는다
@@ -128,19 +131,47 @@ void TransformComponent::update(float deltaTime)
 		SDL_RenderPresent(Game::renderer);
 	}
 
+	std::vector<std::pair<Entity*, RecordInfo>> EntityStacks;
+
+	for (Entity*& obj : objs)
+	{
+		obj->getComponent<TransformComponent>()->position.RoundVectorf();
+		if (!componentOwner->GetEntityManager().GetIsRecording())
+		{
+			EntityStacks.emplace_back(obj, RecordInfo(obj->getComponent<SpriteComponent>()->GetCurrentAnimName(), velocity * -1));
+		}
+	}
+
 	if (deltaX >= PIXEL_SIZE || deltaX <= -PIXEL_SIZE || deltaY >= PIXEL_SIZE || deltaY <= -PIXEL_SIZE)
 	{
 		position.x = roundf(position.x);
 		position.y = roundf(position.y);
+
+		if (!componentOwner->GetEntityManager().GetIsRecording())
+		{
+			EntityStacks.emplace_back(componentOwner, RecordInfo(componentOwner->getComponent<SpriteComponent>()->GetCurrentAnimName(), velocity * -1));
+			componentOwner->GetEntityManager().IncreaseRecordIndex();
+		}
+
+		if (componentOwner->GetEntityManager().GetIsRecording())
+		{
+			componentOwner->GetEntityManager().DecreaseRecordCount();
+
+			if (componentOwner->GetEntityManager().GetRecordCount() <= 0)
+			{
+				componentOwner->GetEntityManager().SetIsRecording(false);
+			}
+		}
+
 		deltaX = 0;
 		velocity.x = 0;//중요함!
 		deltaY = 0;
 		velocity.y = 0;//중요함!
 	}
 
-	for (Entity*& obj : objs)
+	if (!EntityStacks.empty())
 	{
-		obj->getComponent<TransformComponent>()->position.RoundVectorf();
+		componentOwner->GetEntityManager().AddToRecordStack(EntityStacks);
 	}
 
 	//TO DO 로직변경확인 함수 추가

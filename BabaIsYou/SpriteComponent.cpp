@@ -133,3 +133,20 @@ void SpriteComponent::play(std::string _animName)
 	animPlaySpeed = animations[_animName].playspeed;
 	animName = _animName;//플레이할때 사용?
 }
+
+void SpriteComponent::play()
+{
+	maxFrame = animations[animName].maxframe;
+	animIndex = animations[animName].index;
+	animPlaySpeed = animations[animName].playspeed;
+}
+
+void SpriteComponent::SetAnimName(std::string _animName)
+{
+	animName = _animName;
+}
+
+std::string SpriteComponent::GetCurrentAnimName()
+{
+	return animName;
+}

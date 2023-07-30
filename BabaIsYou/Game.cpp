@@ -81,7 +81,7 @@ Game::~Game()
 	textfuncmap.clear();
 	stagefuncmap.clear();
 	//TO DO SDL_Texture* is Leaking
-	_CrtDumpMemoryLeaks();
+	//_CrtDumpMemoryLeaks();
 }
 
 void Game::init(const char* title, int xpos, int ypos, int width, int height, bool fullscreen)
@@ -274,7 +274,7 @@ void Game::LoadMenu()
 	player.addComponent<SpriteComponent>("staticobject", 3, 200, 15, 34);
 	player.addComponent<CollisionComponent>("Baba", PIXEL_SIZE, PIXEL_SIZE, 5);
 	player.addLayerGroup(LayerBaba);
-	(*textfuncmap[TextType::You])(players);
+	(*textfuncmap[TextType::You])(players);//텍스트가 바바역할을 합니다.
 
 	transtition->playTransition(TRANS_TYPE::IN);
 }
@@ -339,6 +339,7 @@ void Game::LoadStage0()
 		}
 	}
 
+	//꼬리 텍스트에 도달했는지체크하고 도달했다면 이벤트 함수를 호출해서 역할을 설정합니다.
 	for (Entity*& tailtext : tailtexts)
 	{
 		Vector2D tailTextPos = tailtext->getComponent<TransformComponent>()->position;

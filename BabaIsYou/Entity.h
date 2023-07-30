@@ -11,22 +11,19 @@ class Component;
 class EntityManager;
 class Vector2D;
 
-//호출될때마다 1씩 증가시켜준다
 inline std::size_t GetNewComponentID()
 {
-	//unsinged int의 최솟값 static으로 선언해서 이후에는 건너뛴다
-	static std::size_t typeID = 0u;
+	//최소 호출 이후에는 건너뛴다
+	static std::size_t typeID = 0;
 	return typeID++;
 }
 
-//noexcept 이 키워드는 예외를 발생시키지 않는다고 컴파일러에게 명시해준다
 template <typename T>
-inline std::size_t GetComponentID() noexcept
+inline std::size_t GetComponentID()
 {
 	//T의 기본 클래스가 Component클래스인지 아닌지 판단합니다.
-	static_assert (std::is_base_of<Component, T>::value, "");
-	//T마다 최초 1번 초기화 되며 GetNewComponentID에는 Add할때 지정된 값을 가지고있다.
-	//GetNewComponentID는 2번호출되지 않는다.
+	static_assert (std::is_base_of<Component, T>::value, "type error");
+	//T(컴포넌트 타입)마다 최초 1번 호출됩니다.
 	static std::size_t type = GetNewComponentID();
 	return type;
 }

@@ -2,6 +2,7 @@
 #include "CollisionComponent.h"
 #include "Collision.h"
 #include "TransformComponent.h"
+#include "SpriteComponent.h"
 #include "Vector2D.h"
 
 void EntityManager::update(float deltaTime)
@@ -79,6 +80,8 @@ void EntityManager::ClearAllEntity()
 	{
 		en->destroy();
 	}
+
+	ClearRecordStack();
 }
 
 std::vector<Entity*> EntityManager::GetEntitiesByLayer(LayerGroup layer) const
@@ -170,4 +173,57 @@ void EntityManager::CheckCollisions() const
 	}
 
 	//Ignore
+}
+
+void EntityManager::AddToRecordStack(std::vector<std::pair<Entity*, RecordInfo>>& EntityStacks)
+{
+	EntityRecordStack.emplace(EntityStacks);
+}
+
+void EntityManager::UpdateRecordStack()
+{
+	if (EntityRecordStack.empty())
+	{
+		return;
+	}
+
+
+	auto& RecordStack = EntityRecordStack.top();
+
+	IsRecording = true;
+	RecordCount = RecordStack.size();
+
+	for (auto& RecordObjInfo : RecordStack)
+	{
+		RecordInfo& RecordInfo = RecordObjInfo.second;
+
+		RecordObjInfo.first->getComponent<SpriteComponent>()->play(RecordInfo.AnimName);
+		RecordObjInfo.first->getComponent<TransformComponent>()->velocity = RecordInfo.Velocity;
+	}
+
+	RecordStack.clear();
+	EntityRecordStack.pop();
+}
+
+void EntityManager::ClearRecordStack()
+{
+	while (!EntityRecordStack.empty())
+	{
+		auto& RecordStack = EntityRecordStack.top();
+		RecordStack.clear();
+		EntityRecordStack.pop();
+	}
+}
+
+void EntityManager::IncreaseRecordIndex()
+{
+	++RecordIndex;
+}
+
+void EntityManager::DecreaseRecordIndex()
+{
+	--RecordIndex;
+
+	if(RecordIndex < 0)
+		RecordIndex = 0;
 }

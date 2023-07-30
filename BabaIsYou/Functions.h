@@ -44,7 +44,7 @@ void isPush(std::vector<Entity*>& vec)
 
 		vec[i]->collisionEvent = []()
 		{
-
+			//Nothing 필요할때 사용됩니다.
 		};
 
 		Game::PushObject.push_back(vec[i]);
