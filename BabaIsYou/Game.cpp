@@ -33,7 +33,7 @@ EntityManager manager;
 SDL_Renderer* Game::renderer = nullptr;
 SDL_Event Game::event;
 TTF_Font* Game::font;
-AssetManager* Game::assetManager = new AssetManager(&manager);
+AssetManager* Game::assetManager = &AssetManager::GetInstance(&manager);
 bool Game::isRunning = false;
 std::vector<Entity*>* Game::StopObject = nullptr;
 std::vector<Entity*> Game::PushObject = {};

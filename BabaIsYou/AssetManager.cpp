@@ -1,12 +1,10 @@
 #include "AssetManager.h"
 #include "TextureManager.h"
 
+AssetManager* AssetManager::instance = nullptr;
+
 AssetManager::AssetManager(EntityManager* _manager)
 	: manager(_manager)
-{
-}
-
-AssetManager::~AssetManager()
 {
 }
 

@@ -226,6 +226,8 @@ void TransformComponent::update(float deltaTime)
 
 	if (!textgroupvec.empty())
 	{
+		Game::PushObject.clear();
+
 		for (std::pair<Vector2D, LayerGroup>& textgroup : textgroupvec)
 		{
 			int connectionCount = 0;
@@ -263,11 +265,14 @@ void TransformComponent::update(float deltaTime)
 						Ett->setTextType(TextType::Default);
 					}
 				}
-				Game::PushObject.clear();
 				(*Game::textfuncmap[TextType::Push])(Game::headtexts);
 				(*Game::textfuncmap[TextType::Push])(Game::verbtexts);
 				(*Game::textfuncmap[TextType::Push])(Game::tailtexts);
 			}
 		}
+
+		(*Game::textfuncmap[TextType::Push])(Game::headtexts);
+		(*Game::textfuncmap[TextType::Push])(Game::verbtexts);
+		(*Game::textfuncmap[TextType::Push])(Game::tailtexts);
 	}
 }
