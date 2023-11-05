@@ -34,6 +34,14 @@ enum LayerGroup : size_t
 	LayerEnd
 };
 
+enum MapType : size_t
+{
+	MapBG1,
+	MapBG2,
+	MapStage1,
+	MapEnd
+};
+
 inline const char* ToString(LayerGroup group)
 {
 	switch (group)

@@ -1,2 +1,20 @@
-﻿  TransformComponent.cpp
+﻿  AssetManager.cpp
+  Collision.cpp
+  CollisionComponent.cpp
+  Entity.cpp
+  EntityManager.cpp
+G:\SDL_Project\BabaIsYou\BabaIsYou\EntityManager.cpp(194,32): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+  FontManager.cpp
+  Game.cpp
+  InputComponent.cpp
+  Map.cpp
+  Menu.cpp
+  MenuTileComponent.cpp
+  SpriteComponent.cpp
+  TextureManager.cpp
+  TileComponent.cpp
+  TransformComponent.cpp
+  WipeTransition.cpp
+  main.cpp
+  Generating Code...
   BabaIsYou.vcxproj -> G:\SDL_Project\BabaIsYou\x64\Debug\BabaIsYou.exe

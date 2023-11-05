@@ -47,5 +47,10 @@ int main( int argc, char* argv[])
 
 	game->clean();
 
+	if (game != nullptr)
+	{
+		delete game;
+	}
+
 	return 0;
 }

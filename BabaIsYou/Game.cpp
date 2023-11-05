@@ -24,10 +24,8 @@
 #define new new ( _NORMAL_BLOCK , __FILE__ , __LINE__ )
 #endif
 
-Map* bg1;
-Map* bg2;
 Menu* menu;
-Map* stage1;
+std::map<MapType, Map*> stages;
 EntityManager manager;
 
 SDL_Renderer* Game::renderer = nullptr;
@@ -57,7 +55,12 @@ std::vector<Entity*>& Game::tailtexts(manager.getLayerGroup(LayerTailText));
 Game::Game()
 {
 	//_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
-	//_CrtSetBreakAlloc(193);
+	//_CrtSetBreakAlloc(200);
+
+	//맵타입, (맵ID, 한타일의 스케일, 한타일의 픽셀수)
+	stages.emplace(MapType::MapBG1, new Map("bg", 1, 854));
+	stages.emplace(MapType::MapBG2, new Map("terrain", 1, 24));
+	stages.emplace(MapType::MapStage1, new Map("stage1", 1, 24));
 
 	textfuncmap.emplace(TextType::You, isYou);
 	textfuncmap.emplace(TextType::Stop, isStop);
@@ -153,7 +156,7 @@ void Game::update(float deltaTime)
 {
 	DeltaSecond = deltaTime;
 	manager.update(deltaTime);
-	manager.CheckCollisions();//현재 사용하지 않습니다.
+	manager.CheckCollisions();
 	transtition->updateTransition(deltaTime);
 }
 
@@ -191,131 +194,121 @@ void Game::clean()
 		transtition = nullptr;
 	}
 
-	manager.ClearAllEntity();
-	manager.DestroyInactiveEntities();
+	ClearStage();
 
-	if (bg1 != nullptr)
-	{
-		delete bg1;
-		bg1 = nullptr;
-	}
-	if (bg2 != nullptr)
-	{
-		delete bg2;
-		bg2 = nullptr;
-	}
-	if (menu != nullptr)
-	{
-		delete menu;
-		menu = nullptr;
-	}
-	if (stage1 != nullptr)
-	{
-		delete stage1;
-		stage1 = nullptr;
-	}
+	ClearStageMap();
 
 	std::cout << "Game Successfully Quited!" << std::endl;
 }
 
-void Game::LoadBackGround()
-{
-	bg1 = new Map("bg", 1, 854);
-	bg1->LoadBG();
-	bg2 = new Map("terrain", 1, 24);//한타일의 스케일, 한타일의 픽셀수
-	bg2->LoadMap("assets/map.map", 33, 18);//단위는 타일
-}
-
-void Game::LoadMenu()
+void Game::ClearStage(int StageIndex)
 {
 	manager.ClearAllEntity();
 	manager.DestroyInactiveEntities();
 
-	CurStageIndex = -1;
+	CurStageIndex = StageIndex;
 	StopObject = nullptr;
 	PushObject.clear();
-
-	if (bg1 != nullptr)
-	{
-		delete bg1;
-		bg1 = nullptr;
-	}
-	if (bg2 != nullptr)
-	{
-		delete bg2;
-		bg2 = nullptr;
-	}
+	
 	if (menu != nullptr)
 	{
 		delete menu;
 		menu = nullptr;
 	}
-	if (stage1 != nullptr)
+}
+
+void Game::ClearStageMap()
+{
+	for (auto& stage : stages)
 	{
-		delete stage1;
-		stage1 = nullptr;
+		if (stage.second != nullptr)
+		{
+			delete stage.second;
+		}
 	}
+
+	stages.clear();
+}
+
+void Game::LoadBackGround()
+{
+	if (stages.find(MapBG1) != stages.end()) {
+		stages[MapBG1]->LoadBG();
+	}
+
+	if (stages.find(MapBG2) != stages.end()) {
+		//숫자 단위는 타일갯수
+		stages[MapBG2]->LoadMap("assets/map.map", 33, 18);
+	}
+}
+
+void Game::LoadMenu()
+{
+	ClearStage();
 
 	LoadBackGround();
 
-	//Loadmenu 793 432
-	menu = new Menu("menumap", 1, WINDOW_WIDTH - WIDTH_INTERVAL * 2, WINDOW_HEIGHT - HEIGHT_INVERVAL * 2); //배경타일스케일, 배경x, 배경y, 메뉴오브젝트 스케일, 메뉴오브젝트픽셀수
-	menu->LoadMenu();
-	menu->LoadMenuObject("assets/menu.map", 33, 18); //커서, 라인, 스퀘어, ttf
-	menu->LoadCollisionMap("assets/menucol.map", 33, 18);
+	CreateMenu();
 
 	//레이어에 이벤트 바인딩
 	auto menufunc = isMenu;
 	(*menufunc)(manager.getLayerGroup(LayerMenu));
 
-	Entity& player(manager.addEntity());
-
-	player.addComponent<TransformComponent>(static_cast<float>(WIDTH_INTERVAL) + 9 * PIXEL_SIZE - 5, static_cast<float>(HEIGHT_INVERVAL) + 15 * PIXEL_SIZE - 5, LARGE_PIXEL_SIZE, LARGE_PIXEL_SIZE);
-	player.addComponent<SpriteComponent>("staticobject", 3, 200, 15, 34);
-	player.addComponent<CollisionComponent>("Baba", PIXEL_SIZE, PIXEL_SIZE, 5);
-	player.addLayerGroup(LayerBaba);
-	(*textfuncmap[TextType::You])(players);//텍스트가 바바역할을 합니다.
+	//메뉴 플레이어 지정
+	SetPlayer(static_cast<float>(WIDTH_INTERVAL) + 9 * PIXEL_SIZE - 5, static_cast<float>(HEIGHT_INVERVAL) + 15 * PIXEL_SIZE - 5, LARGE_PIXEL_SIZE, LARGE_PIXEL_SIZE,
+		"staticobject", 3, 200, 15, 34, false, false,
+		"Baba", 5, LayerBaba);
 
 	transtition->playTransition(TRANS_TYPE::IN);
 }
 
+void Game::CreateMenu()
+{
+	//Loadmenu 793 432
+	menu = new Menu("menumap", 1, WINDOW_WIDTH - WIDTH_INTERVAL * 2, WINDOW_HEIGHT - HEIGHT_INVERVAL * 2); //배경타일스케일, 배경x, 배경y, 메뉴오브젝트 스케일, 메뉴오브젝트픽셀수
+	menu->LoadMenu();
+	menu->LoadMenuObject("assets/menu.map", 33, 18); //커서, 라인, 스퀘어, ttf
+	menu->LoadCollisionMap("assets/menucol.map", 33, 18);
+}
+
 void Game::LoadStage0()
 {
-	manager.ClearAllEntity();
-	manager.DestroyInactiveEntities();
-
-	CurStageIndex = 0;
-	StopObject = nullptr;
-	PushObject.clear();
-
-	if (bg1 != nullptr)
-	{
-		delete bg1;
-		bg1 = nullptr;
-	}
-	if (bg2 != nullptr)
-	{
-		delete bg2;
-		bg2 = nullptr;
-	}
-	if (menu != nullptr)
-	{
-		delete menu;
-		menu = nullptr;
-	}
-	if (stage1 != nullptr)
-	{
-		delete stage1;
-		stage1 = nullptr;
-	}
+	ClearStage(0);
 
 	LoadBackGround();
 
-	stage1 = new Map("stage1", 1, 24);
-	stage1->LoadObject("assets/stage1.map", 33, 18);
+	if (stages.find(MapStage1) != stages.end()) {
+		stages[MapStage1]->LoadObject("assets/stage1.map", 33, 18);
+	}
+
+	std::vector<std::pair<Vector2D, LayerGroup>> textgroupvec;
 
 	//초반에 텍스트들의 상관관계를 설정합니다.
-	std::vector<std::pair<Vector2D, LayerGroup>> textgroupvec;
+	SetInitialSentence(textgroupvec);
+
+	//꼬리 텍스트에 도달했는지체크하고 도달했다면 이벤트 함수를 호출해서 역할을 설정합니다.
+	SetLastSentence(textgroupvec);
+	
+	SetPushTextObject();
+
+	SetPlayer(static_cast<float>(WIDTH_INTERVAL) + 12 * PIXEL_SIZE, static_cast<float>(HEIGHT_INVERVAL) + 10 * PIXEL_SIZE, PIXEL_SIZE, PIXEL_SIZE,
+		"playable", 3, 150, 23, 0, true, true,
+		"Baba", 0, LayerBaba);
+
+	transtition->playTransition(TRANS_TYPE::IN);
+}
+
+void Game::LoadStage1()
+{
+	ClearStage(1);
+
+	LoadBackGround();
+
+	transtition->playTransition(TRANS_TYPE::IN);
+}
+
+void Game::SetInitialSentence(std::vector<std::pair<Vector2D, LayerGroup>>& textgroup)
+{
 	for (Entity*& text : headtexts)
 	{
 		Vector2D nextRightPos = Vector2D(text->getComponent<TransformComponent>()->position.x + PIXEL_SIZE, text->getComponent<TransformComponent>()->position.y);
@@ -327,23 +320,25 @@ void Game::LoadStage0()
 			if (verbPos == nextRightPos)
 			{
 				verbPos.x += PIXEL_SIZE;
-				textgroupvec.emplace_back(verbPos, text->getManagingLayer());
+				textgroup.emplace_back(verbPos, text->getManagingLayer());
 				verbPos.x -= PIXEL_SIZE;
 			}
 			if (verbPos == nextBottomPos)
 			{
 				verbPos.y += PIXEL_SIZE;
-				textgroupvec.emplace_back(verbPos, text->getManagingLayer());
+				textgroup.emplace_back(verbPos, text->getManagingLayer());
 				verbPos.y -= PIXEL_SIZE;
 			}
 		}
 	}
+}
 
-	//꼬리 텍스트에 도달했는지체크하고 도달했다면 이벤트 함수를 호출해서 역할을 설정합니다.
+void Game::SetLastSentence(std::vector<std::pair<Vector2D, LayerGroup>>& textgroup)
+{
 	for (Entity*& tailtext : tailtexts)
 	{
 		Vector2D tailTextPos = tailtext->getComponent<TransformComponent>()->position;
-		for (std::pair<Vector2D, LayerGroup>& textgroup : textgroupvec)
+		for (std::pair<Vector2D, LayerGroup>& textgroup : textgroup)
 		{
 			if (tailTextPos == textgroup.first)
 			{
@@ -354,35 +349,24 @@ void Game::LoadStage0()
 			}
 		}
 	}
+}
 
+void Game::SetPushTextObject()
+{
 	textfunc func = textfuncmap[TextType::Push];
 	(*func)(headtexts);
 	(*func)(verbtexts);
 	(*func)(tailtexts);
-
-	Entity& player(manager.addEntity());
-
-	player.addComponent<TransformComponent>(static_cast<float>(WIDTH_INTERVAL) + 12 * PIXEL_SIZE, static_cast<float>(HEIGHT_INVERVAL) + 10 * PIXEL_SIZE, PIXEL_SIZE, PIXEL_SIZE);
-	player.addComponent<SpriteComponent>("playable", 3, 150, 23, 0, true, true);
-	player.addComponent<CollisionComponent>("Baba", PIXEL_SIZE, PIXEL_SIZE);
-	player.addLayerGroup(LayerBaba);
-
-	(*textfuncmap[TextType::You])(players);
-
-	transtition->playTransition(TRANS_TYPE::IN);
 }
 
-void Game::LoadStage1()
+void Game::SetPlayer(float posX, float posY, int meshHeight, int meshWidth, 
+	const char* spriteName, int frameCount, int animSpeed, int spriteX, int spriteY, bool hasDir, bool isPlayer,
+	const char* collisionName, int extraCollisionSize, size_t layerID)
 {
-	//TO DO기존의 모든 오브젝트 제거
-	manager.ClearAllEntity();
-	manager.DestroyInactiveEntities();
-
-	CurStageIndex = 1;
-	StopObject = nullptr;
-	PushObject.clear();
-
-	LoadBackGround();
-
-	transtition->playTransition(TRANS_TYPE::IN);
+	Entity& player(manager.addEntity());
+	player.addComponent<TransformComponent>(posX, posY, meshHeight, meshWidth);
+	player.addComponent<SpriteComponent>(spriteName, frameCount, animSpeed, spriteX, spriteY, hasDir, isPlayer);
+	player.addComponent<CollisionComponent>(collisionName, PIXEL_SIZE, PIXEL_SIZE, extraCollisionSize);
+	player.addLayerGroup(layerID);
+	(*textfuncmap[TextType::You])(players);
 }

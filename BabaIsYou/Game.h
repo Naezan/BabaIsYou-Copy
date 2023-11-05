@@ -12,6 +12,7 @@ class AssetManager;
 class Entity;
 class Game;
 class WipeTransition;
+class Vector2D;
 
 using textfunc = void (*)(std::vector<Entity*>&);
 //using stagefunc = void (Game::*)(void);
@@ -31,10 +32,24 @@ public:
 
 	bool running() { return isRunning; }
 
+	void ClearStage(int stageIndex = -1);
+	void ClearStageMap();
 	void LoadBackGround();
 	void LoadMenu();
+	void CreateMenu();
+
+	//스테이지 함수 바인딩 통일성을 위해 매개변수를 가지지 않습니다.
 	void LoadStage0();
 	void LoadStage1();
+
+
+	void SetInitialSentence(std::vector<std::pair<Vector2D, LayerGroup>>& textgroup);
+	void SetLastSentence(std::vector<std::pair<Vector2D, LayerGroup>>& textgroup);
+
+	void SetPushTextObject();
+	void SetPlayer(float posX, float posY, int meshHeight, int meshWidth,
+		const char* spriteName, int frameCount, int animSpeed, int spriteX, int spriteY, bool hasDir, bool isPlayer,
+		const char* collisionName, int extraCollisionSize, size_t layerID);
 
 	static SDL_Event event;
 	static SDL_Renderer* renderer;
